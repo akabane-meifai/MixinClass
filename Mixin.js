@@ -2,6 +2,8 @@ class Mixin{
 	constructor(...args){
 		this.si = [];
 		this.funcs = {};
+		const af = Object.getPrototypeOf(async function(){});
+		const ag = Object.getPrototypeOf(async function*(){});
 		for(let sc of this.constructor.sc){
 			let c = sc;
 			let i;
@@ -12,26 +14,36 @@ class Mixin{
 			}else{
 				this.si.push(i = new sc());
 			}
+			const p = Object.getPrototypeOf(i);
 			const props = Reflect.ownKeys(c.prototype).filter(p => (p != "constructor") && (typeof c.prototype[p] === "function"));
 			for(let prop of props){
 				if(!(prop in this.funcs)){
 					this.funcs[prop] = new Proxy(function(){}, {
 						apply: function(target, thisArg, argumentsList){
-							let res;
+							let res = void(0);
 							for(let item of target.chain){
-								res = item.func.apply((target.receiver == thisArg) ? item.instance : thisArg, argumentsList);
+								let it = (target.receiver == thisArg) ? item.instance : thisArg;
+								if(res !== void(0)){
+									it[Mixin.relay] = res;
+								}
+								if(item.async){
+									item.func.apply(it, argumentsList);
+								}else{
+									res = item.func.apply(it, argumentsList);
+								}
+								delete it[Mixin.relay];
 							}
 							return res;
 						}
 					});
 					this.funcs[prop].chain = [];
 				}
-				this.funcs[prop].chain.push({func: c.prototype[prop], instance: i});
+				this.funcs[prop].chain.push({func: c.prototype[prop], instance: i, async: (p === af) || (p === ag)});
 			}
 		}
-		console.log(this.funcs);
 	}
 	static proxy = Symbol("proxy");
+	static relay = Symbol("relay");
 	static attach(...classes){
 		return class extends this{
 			static sc = classes;
