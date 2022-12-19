@@ -44,6 +44,7 @@ class Mixin{
 	}
 	static proxy = Symbol("proxy");
 	static relay = Symbol("relay");
+	static init = Symbol("init");
 	static attach(...classes){
 		return class extends this{
 			static sc = classes;
@@ -61,7 +62,9 @@ class Mixin{
 					return Object.assign(target.funcs[prop], {receiver: receiver});
 				}
 				for(let si of target.si){
-					return si[prop];
+					if(prop in si){
+						return si[prop];
+					}
 				}
 			},
 			has(target, key){
@@ -73,8 +76,16 @@ class Mixin{
 				return false;
 			}
 		});
+		let init = [];
 		for(let i = mixin.si.length - 1; i >= 0; i--){
 			 mixin.si[i][this.proxy] = proxy;
+			 if(this.init in mixin.si[i]){
+			 	init.push({func: mixin.si[i][this.init], instance: mixin.si[i]});
+			 }
+		}
+		while(init.length > 0){
+			const p = init.pop();
+			p.func.apply(p.instance);
 		}
 		return proxy;
 	}
