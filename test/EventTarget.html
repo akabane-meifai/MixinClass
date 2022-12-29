@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<script type="text/javascript" src="../Mixin.js"></script>
+<script type="text/javascript">
+class SetObserver extends EventTarget{
+	add(value){
+		this.dispatchEvent(new CustomEvent("add", {detail: {value: value}}));
+		if(Mixin.relay in this){
+			return this[Mixin.relay];
+		}
+	}
+	clear(){
+		this.dispatchEvent(new CustomEvent("clear"));
+		if(Mixin.relay in this){
+			return this[Mixin.relay];
+		}
+	}
+	delete(value){
+		this.dispatchEvent(new CustomEvent("delete", {detail: {value: value}}));
+		if(Mixin.relay in this){
+			return this[Mixin.relay];
+		}
+	}
+}
+let listener = {
+	map: new Map(),
+	handleEvent: function(e){
+		let div = document.createElement("div");
+		if(e.type == "add"){
+			div.textContent = `${e.detail.value}を追加`;
+		}else if(e.type == "clear"){
+			div.textContent = "すべての要素を削除";
+		}else if(e.type == "delete"){
+			div.textContent = `${e.detail.value}を削除`;
+		}
+		document.body.appendChild(div)
+	}
+};
+document.addEventListener("DOMContentLoaded", function(e){
+	let a = Mixin.attach(Set, SetObserver).newInstance();
+	a.addEventListener("add", listener);
+	a.addEventListener("clear", listener);
+	a.addEventListener("delete", listener);
+	a.add("hoge");
+	a.add("huga");
+	a.delete("hoge");
+	a.clear();
+});
+</script>
+</head>
+<body>
+</body>
+</html>
