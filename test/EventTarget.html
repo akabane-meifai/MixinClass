@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<meta charset="UTF-8" />
 <script type="text/javascript" src="../Mixin.js"></script>
 <script type="text/javascript">
 class SetObserver extends EventTarget{
@@ -23,22 +24,32 @@ class SetObserver extends EventTarget{
 		}
 	}
 }
-let listener = {
+const listener = {
 	map: new Map(),
 	handleEvent: function(e){
 		let div = document.createElement("div");
 		if(e.type == "add"){
-			div.textContent = `${e.detail.value}を追加`;
+			if(!(this.map.has(e.detail.value))){
+				div.textContent = `${e.detail.value}を追加`;
+				this.map.set(e.detail.value, div);
+			}
 		}else if(e.type == "clear"){
 			div.textContent = "すべての要素を削除";
+			this.map.clear();
 		}else if(e.type == "delete"){
-			div.textContent = `${e.detail.value}を削除`;
+			if(this.map.has(e.detail.value)){
+				div.textContent = `${e.detail.value}を削除`;
+				this.map.get(e.detail.value).style.filter = "opacity(0.5)";
+				this.map.delete(e.detail.value);
+			}
+		}else{
+			return;
 		}
 		document.body.appendChild(div)
 	}
 };
 document.addEventListener("DOMContentLoaded", function(e){
-	let a = Mixin.attach(Set, SetObserver).newInstance();
+	const a = Mixin.attach(Set, SetObserver).newInstance();
 	a.addEventListener("add", listener);
 	a.addEventListener("clear", listener);
 	a.addEventListener("delete", listener);
