@@ -10,7 +10,15 @@ class Mixin{
 		for(let sc of this.constructor.sc){
 			let c = sc;
 			let i;
-			if(Array.isArray(sc)){
+			if(sc instanceof MixinBuilder){
+				let a = sc.args.map(i => args[i]);
+				i = sc.method.apply(sc.thisArg, a);
+				if(i == null){
+					continue;
+				}
+				c = i.constructor;
+				this.si.push(i);
+			}else if(Array.isArray(sc)){
 				c = sc[0];
 				let a = sc.slice(1).map(i => args[i]);
 				this.si.push(i = new c(...a));
@@ -156,5 +164,13 @@ class Mixin{
 			p.func.apply(p.instance);
 		}
 		return proxy;
+	}
+}
+
+class MixinBuilder{
+	constructor(method, thisArg, ...args){
+		this.method = method;
+		this.thisArg = thisArg;
+		this.args = args;
 	}
 }
